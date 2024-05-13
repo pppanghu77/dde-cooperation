@@ -81,7 +81,7 @@ void mainWindow::buildGUI()
 
 	table.verticalHeader()->hide();
 	table.horizontalHeader()->hide();
-	table.setColumnCount(2);
+    table.setColumnCount(5);
 	layout->addWidget(&table);
 	//table.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -115,7 +115,7 @@ void mainWindow::appStateChanged(Qt::ApplicationState state)
 		if (publishEnabled && !zeroConf.publishExists())
 			startPublish();
 		if (!zeroConf.browserExists())
-			zeroConf.startBrowser("_qtzeroconf_test._tcp");
+            zeroConf.startBrowser("_cooperation._udp");
 	}
 }
 

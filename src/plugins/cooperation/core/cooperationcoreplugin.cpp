@@ -7,6 +7,7 @@
 #include "events/cooperationcoreeventreceiver.h"
 #include "utils/cooperationutil.h"
 #include "maincontroller/maincontroller.h"
+#include <discovercontroller/discovercontroller.h>
 #include "transfer/transferhelper.h"
 #include "cooperation/cooperationmanager.h"
 #include "info/deviceinfo.h"
@@ -45,12 +46,13 @@ void CooperaionCorePlugin::initialize()
     bindEvents();
 
     CommonUitls::initLog();
-    CommonUitls::manageDaemonProcess("front");
+    //CommonUitls::manageDaemonProcess("front");
     CommonUitls::loadTranslator();
 }
 
 bool CooperaionCorePlugin::start()
 {
+    DiscoverController::instance();
     CooperationUtil::instance()->mainWindow()->show();
     MainController::instance()->regist();
     TransferHelper::instance()->regist();

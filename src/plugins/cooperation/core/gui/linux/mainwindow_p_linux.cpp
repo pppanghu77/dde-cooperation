@@ -14,6 +14,8 @@
 
 #include <gui/widgets/cooperationstatewidget.h>
 
+#include <discovercontroller/discovercontroller.h>
+
 using namespace cooperation_core;
 DWIDGET_USE_NAMESPACE
 
@@ -36,6 +38,7 @@ void MainWindowPrivate::initTitleBar()
     refreshBtn->setToolTip(tr("Re-scan for devices"));
     titleBar->addWidget(refreshBtn, Qt::AlignLeft);
     connect(refreshBtn, &DIconButton::clicked, q, [] { MainController::instance()->start(); });
+    connect(refreshBtn, &DIconButton::clicked, q, [] { DiscoverController::instance()->startDiscover(); });
 
     if (qApp->property("onlyTransfer").toBool()) {
         titleBar->setMenuVisible(false);

@@ -122,7 +122,7 @@ void MainController::start()
     isRunning = true;
 
     // 延迟1s，为了展示发现界面
-    QTimer::singleShot(1000, this, &MainController::discoveryDevice);
+    //QTimer::singleShot(1000, this, &MainController::discoveryDevice);
 }
 
 void MainController::stop()
