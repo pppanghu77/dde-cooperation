@@ -202,6 +202,11 @@ void SessionManager::sendRpcRequest(const QString &ip, int type, const QString &
     _session_worker->sendAsyncRequest(ip, request);
 }
 
+void SessionManager::setHeartbeat(bool enable)
+{
+    _session_worker->setHeartBeat(enable);
+}
+
 void SessionManager::handleTransData(const QString endpoint, const QStringList nameVector)
 {
     QStringList parts = endpoint.split(":");

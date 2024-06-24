@@ -13,6 +13,7 @@
 
 #include <QObject>
 #include <QMap>
+#include <QTimer>
 
 class SessionWorker : public QObject, public SessionCallInterface
 {
@@ -34,6 +35,9 @@ public:
 
     QString sendRequest(const QString &target, const proto::OriginMessage &request);
     bool sendAsyncRequest(const QString &target, const proto::OriginMessage &request);
+
+    void setHeartBeat(bool enable);
+    void handleHeartBeat();
 
     void updatePincode(QString code);
     void updateLogin(QString ip, bool logined);
@@ -80,6 +84,10 @@ private:
 
     // <ip, login>
     QMap<QString, bool> _login_hosts;
+
+    QTimer *_heartbeatsendTimer { nullptr };
+    QTimer *_heartbeatrecvTimer { nullptr };
+    int _heartbeat = 0;
 };
 
 #endif // SESSIONWORKER_H

@@ -17,6 +17,7 @@
 #include <QJsonDocument>
 #include <QDebug>
 #include <QDir>
+#include <QTimer>
 
 using namespace cooperation_core;
 NetworkUtilPrivate::NetworkUtilPrivate(NetworkUtil *qq)
@@ -104,6 +105,13 @@ NetworkUtilPrivate::NetworkUtilPrivate(NetworkUtil *qq)
                                           "handleDisConnectResult",
                                           Qt::QueuedConnection,
                                           Q_ARG(QString, QString(req.host.c_str())));
+        }
+            return true;
+        case APPLY_HEARTBEAT: {
+            ApplyMessage req, res;
+            req.from_json(json_value);
+            res.flag = DO_DONE;
+            *res_msg = res.as_json().serialize();
         }
             return true;
         case APPLY_CANCELED: {
@@ -217,6 +225,40 @@ void NetworkUtilPrivate::handleAsyncRpcResult(int32_t type, const QString respon
                                       Qt::QueuedConnection,
                                       Q_ARG(QString, QString(reply.nick.c_str())));
     }
+}
+
+void NetworkUtilPrivate::setHeartBeat(bool enable)
+{
+    if (!enable) {
+        if (_heartbeatsendTimer)
+            _heartbeatsendTimer->stop();
+        if (_heartbeatrecvTimer)
+            _heartbeatrecvTimer->stop();
+        return;
+    }
+
+    if (!_heartbeatsendTimer) {
+        _heartbeatsendTimer = new QTimer();
+        qWarning() << "-----------------+++";
+        QObject::connect(_heartbeatsendTimer, &QTimer::timeout, this, [this] {
+            ApplyMessage msg;
+            msg.flag = ASK_QUIET;
+            QString jsonMsg = msg.as_json().serialize().c_str();
+            sessionManager->sendRpcRequest(confirmTargetAddress, APPLY_INFO, jsonMsg);
+            handleHeartBeat();
+        });
+    }
+    _heartbeatsendTimer->start(1000);
+}
+
+void NetworkUtilPrivate::handleHeartBeat()
+{
+    if (_heartbeat >= 3) {
+        setHeartBeat(false);
+        qWarning() << "9999999999999999999";
+        return;
+    }
+    _heartbeat++;
 }
 
 NetworkUtil::NetworkUtil(QObject *parent)

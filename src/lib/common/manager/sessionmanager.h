@@ -35,6 +35,7 @@ public:
     void cancelSyncFile(QString &ip);
 
     void sendRpcRequest(const QString &target, int type, const QString &reqJson);
+    void setHeartbeat(bool enable);
 
 signals:
     void notifyCancelWeb();

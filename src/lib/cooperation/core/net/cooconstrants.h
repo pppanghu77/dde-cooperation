@@ -18,6 +18,7 @@ typedef enum apply_type_t {
     APPLY_SHARE_RESULT = 112,   // 控制申请的结果
     APPLY_SHARE_STOP = 113,   // 收到停止事件
     APPLY_CANCELED = 120,   // 申请被取消
+    APPLY_HEARTBEAT = 121,
 } ApplyReqType;
 
 enum ShareConnectReplyCode {

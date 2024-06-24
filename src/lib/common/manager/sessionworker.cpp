@@ -12,6 +12,7 @@
 #include <QStandardPaths>
 #include <QCoreApplication>
 #include <QStorageInfo>
+#include <QThread>
 
 SessionWorker::SessionWorker(QObject *parent)
     : QObject(parent)
@@ -160,10 +161,67 @@ void SessionWorker::onReceivedMessage(const proto::OriginMessage &request, proto
         return;
     }
     break;
+    case HEARTBEAT: {
+        ApplyMessage req, res;
+        req.from_json(v);
+        res.flag = req.flag;
+        if(!_heartbeatrecvTimer){
+            _heartbeatrecvTimer = new QTimer(this);
+            qWarning() << "-----------------";
+            QObject::connect(_heartbeatrecvTimer, &QTimer::timeout, this, &SessionWorker::handleHeartBeat);
+            _heartbeatrecvTimer->start();
+        }
+        if(!_heartbeatrecvTimer->isActive())
+            _heartbeatrecvTimer->start(1000);
+        _heartbeat = 0;
+        return;
+    }
+    break;
     default:
         DLOG << "unkown type: " << type;
         break;
     }
+}
+
+void SessionWorker::handleHeartBeat()
+{
+    if(_heartbeat >= 3){
+        setHeartBeat(false);
+        //emit onConnectChanged(RPC_DISCONNECTED, "");
+        qWarning() << "9999999999999999999";
+        return;
+    }
+    _heartbeat++;
+}
+
+void SessionWorker::setHeartBeat(bool enable)
+{
+    if(!enable){
+        if(_heartbeatsendTimer)
+            _heartbeatsendTimer->stop();
+        if(_heartbeatrecvTimer)
+            _heartbeatrecvTimer->stop();
+        return;
+    }
+
+    if(!_heartbeatsendTimer){
+        _heartbeatsendTimer = new QTimer();
+        qWarning() << "-----------------+++";
+        QObject::connect(_heartbeatsendTimer, &QTimer::timeout, this, [this]{
+            LoginMessage req, res;
+            req.name = "";
+            req.auth = "";
+            proto::OriginMessage request;
+            request.mask = HEARTBEAT;
+            request.json_msg = req.as_json().serialize();
+            qWarning() << "-----------------+++";
+            bool result = sendAsyncRequest(_connectedAddress, request);
+            if(result)
+                _heartbeat = 0;
+            handleHeartBeat();
+        }, Qt::QueuedConnection);
+    }
+    QMetaObject::invokeMethod(_heartbeatsendTimer, "start", Qt::QueuedConnection, Q_ARG(int, 1000));
 }
 
 bool SessionWorker::onStateChanged(int state, std::string &msg)
@@ -182,6 +240,7 @@ bool SessionWorker::onStateChanged(int state, std::string &msg)
         DLOG << "connected remote: " << msg;
         _tryConnect = true;
         result = true;
+        setHeartBeat(true);
     }
     break;
     case RPC_DISCONNECTED: {

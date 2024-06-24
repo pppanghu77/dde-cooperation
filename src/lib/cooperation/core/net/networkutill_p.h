@@ -26,6 +26,8 @@ public:
 
     QString getConfirmTargetAddress() const;
 
+    void handleHeartBeat();
+    void setHeartBeat(bool enable);
 public Q_SLOTS:
     void handleConnectStatus(int result, QString reason);
     void handleTransChanged(int status, const QString &path, quint64 size);
@@ -38,6 +40,10 @@ private:
     QString confirmTargetAddress {};   // remote ip address
     QString storageRoot = {};   //storage dir config
     QString storageFolder = {};   //sub folder under storage dir config
+
+    QTimer *_heartbeatsendTimer { nullptr };
+    QTimer *_heartbeatrecvTimer { nullptr };
+    int _heartbeat = 0;
 };
 
 }

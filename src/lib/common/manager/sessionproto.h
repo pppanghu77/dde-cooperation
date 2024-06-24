@@ -36,6 +36,7 @@ typedef enum dt_type_t {
     REQ_TRANS_CANCLE = 1003,
     CAST_INFO = 1004,
     INFO_TRANS_COUNT = 1005,
+    HEARTBEAT = 1006,
 } ComType;
 
 typedef enum apply_flag_t {
