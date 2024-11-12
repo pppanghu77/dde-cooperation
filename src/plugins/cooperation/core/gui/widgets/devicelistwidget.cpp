@@ -88,7 +88,15 @@ void DeviceListWidget::insertItem(int index, const DeviceInfoPointer info)
 
 void DeviceListWidget::updateItem(int index, const DeviceInfoPointer info)
 {
+    if (!info || index < 0 || index >= mainLayout->count()) {
+        return;
+    }
+
     QLayoutItem *item = mainLayout->itemAt(index);
+    if (!item) {
+        return;
+    }
+
     DeviceItem *devItem = qobject_cast<DeviceItem *>(item->widget());
     if (!devItem) {
         LOG << "Can not find this item, index: " << index << " ip address: " << info->ipAddress().toStdString();
