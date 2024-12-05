@@ -35,7 +35,10 @@ void CooperaionCorePlugin::initialize()
         ConfigManager::instance();
         qApp->setApplicationName(appName);
     } else {
-        connect(qApp, &SingleApplication::raiseWindow, this, [] { CooperationUtil::instance()->mainWindow()->activateWindow(); });
+        connect(qApp, &SingleApplication::raiseWindow, this, [] {
+            CooperationUtil::instance()->mainWindow()->show();
+            CooperationUtil::instance()->mainWindow()->activateWindow();
+        });
     }
 
 #ifdef linux
