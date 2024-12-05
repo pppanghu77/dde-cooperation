@@ -193,7 +193,8 @@ void MainWindow::showCloseDialog()
     if (option == "Exit")
         QApplication::quit();
 
-    CooperationDialog dlg;
+    CooperationDialog dlg(qApp->activeWindow());
+    dlg.setFixedSize(360, 260);
 
     QVBoxLayout *layout = new QVBoxLayout();
     QCheckBox *op1 = new QCheckBox(tr("Minimise to system tray"));
