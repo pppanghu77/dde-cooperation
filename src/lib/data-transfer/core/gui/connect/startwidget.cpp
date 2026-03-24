@@ -1,6 +1,11 @@
-﻿#include "startwidget.h"
+﻿// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#include "startwidget.h"
 #include "../type_defines.h"
 #include "common/log.h"
+#include "common/debugdialog.h"
 #include <net/helper/transferhepler.h>
 
 #include <QHBoxLayout>
@@ -10,11 +15,18 @@
 #include <QStackedWidget>
 #include <QCheckBox>
 #include <QTextBrowser>
+#include <QMouseEvent>
+#include <QTimer>
 
 StartWidget::StartWidget(QWidget *parent)
     : QFrame(parent)
 {
     DLOG << "Widget constructor called";
+    clickTimer = new QTimer(this);
+    clickTimer->setSingleShot(true);
+    clickTimer->setInterval(3000); // 1 second timeout
+    connect(clickTimer, &QTimer::timeout, this, &StartWidget::resetClickCount);
+
     initUI();
 }
 
@@ -36,9 +48,14 @@ void StartWidget::initUI()
     iconLabel->setPixmap(QIcon(":/icon/picture-home.png").pixmap(200, 160));
     iconLabel->setAlignment(Qt::AlignBottom | Qt::AlignHCenter);
 
-    QLabel *titileLabel = new QLabel(tr("UOS data transfer"), this);
-    StyleHelper::setAutoFont(titileLabel, 24, QFont::DemiBold);
-    titileLabel->setAlignment(Qt::AlignCenter);
+    titleLabel = new QLabel(tr("UOS data transfer"), this);
+    StyleHelper::setAutoFont(titleLabel, 24, QFont::DemiBold);
+    titleLabel->setAlignment(Qt::AlignCenter);
+
+    // Install event filter for detecting clicks on title
+    titleLabel->installEventFilter(this);
+
+    QLabel *titileLabel = titleLabel;
 
     QLabel *textLabel2 = new QLabel(tr("UOS transfer tool enables one click migration of your files, personal data, and applications to\nUOS, helping you seamlessly replace your system."), this);
     textLabel2->setAlignment(Qt::AlignTop | Qt::AlignCenter);
@@ -78,4 +95,38 @@ void StartWidget::themeChanged(int theme)
         DLOG << "Theme is dark, setting stylesheet";
         setStyleSheet(".StartWidget{background-color: rgb(37, 37, 37); border-radius: 10px;}");
     }
+}
+
+bool StartWidget::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == titleLabel && event->type() == QEvent::MouseButtonRelease) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+        if (mouseEvent->button() == Qt::LeftButton) {
+            clickCount++;
+
+            if (clickCount >= CLICK_THRESHOLD) {
+                showDebugDialog();
+                resetClickCount();
+            } else {
+                // Restart the timer on each click
+                clickTimer->start();
+            }
+
+            return true;
+        }
+    }
+
+    return QFrame::eventFilter(obj, event);
+}
+
+void StartWidget::resetClickCount()
+{
+    clickCount = 0;
+}
+
+void StartWidget::showDebugDialog()
+{
+    DLOG << "Opening debug dialog";
+    DebugDialog dialog(this);
+    dialog.exec();
 }

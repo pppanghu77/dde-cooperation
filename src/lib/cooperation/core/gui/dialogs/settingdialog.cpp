@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2023-2024 UnionTech Software Technology Co., Ltd.
+﻿// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -10,6 +10,7 @@
 #include "configs/dconfig/dconfigmanager.h"
 #include "common/qtcompat.h"
 #include "common/log.h"
+#include "common/debugdialog.h"
 
 #ifdef linux
 #    include <DPalette>
@@ -21,6 +22,7 @@
 #include <QStandardPaths>
 #include <QToolTip>
 #include <QScrollBar>
+#include <QMouseEvent>
 
 #include <utils/cooperationutil.h>
 #include <base/reportlog/reportlogmanager.h>
@@ -57,6 +59,11 @@ SettingDialogPrivate::SettingDialogPrivate(SettingDialog *qq)
     mainLayout = new QVBoxLayout(q);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
+
+    clickTimer = new QTimer(this);
+    clickTimer->setSingleShot(true);
+    clickTimer->setInterval(3000);
+    connect(clickTimer, &QTimer::timeout, this, &SettingDialogPrivate::resetClickCount);
 }
 
 SettingDialogPrivate::~SettingDialogPrivate()
@@ -130,11 +137,12 @@ void SettingDialogPrivate::initWindow()
 void SettingDialogPrivate::createBasicWidget()
 {
     DLOG << "Creating basic settings widget";
-    CooperationLabel *basicLable = new CooperationLabel(tr("Basic Settings"), q);
-    auto cm = basicLable->contentsMargins();
+    basicLabel = new CooperationLabel(tr("Basic Settings"), q);
+    auto cm = basicLabel->contentsMargins();
     cm.setLeft(10);
-    basicLable->setContentsMargins(cm);
-    CooperationGuiHelper::setAutoFont(basicLable, 16, QFont::DemiBold);
+    basicLabel->setContentsMargins(cm);
+    CooperationGuiHelper::setAutoFont(basicLabel, 16, QFont::DemiBold);
+    basicLabel->installEventFilter(q);
 
     findCB = new QComboBox(q);
     findCB->addItems(findComboBoxInfo);
@@ -153,7 +161,7 @@ void SettingDialogPrivate::createBasicWidget()
 #ifdef linux
     tipLabel->setForegroundRole(DTK_GUI_NAMESPACE::DPalette::TextTips);
 #else
-    basicLable->setFixedHeight(36);
+    basicLabel->setFixedHeight(36);
     setQComboxWinStyle(findCB);
     QList<QColor> colorList { QColor(0, 0, 0, static_cast<int>(255 * 0.5)),
                               QColor(192, 192, 192) };
@@ -195,7 +203,7 @@ void SettingDialogPrivate::createBasicWidget()
     SettingItem *nameItem = new SettingItem(q);
     nameItem->setItemInfo(tr("Device name"), nameEdit);
 
-    contentLayout->addWidget(basicLable);
+    contentLayout->addWidget(basicLabel);
     contentLayout->addSpacing(12);
     contentLayout->addWidget(findItem);
     contentLayout->addSpacing(6);
@@ -476,6 +484,24 @@ SettingDialog::~SettingDialog()
 
 bool SettingDialog::eventFilter(QObject *watched, QEvent *event)
 {
+    // Check for basic label click
+    if (watched == d->basicLabel && event->type() == QEvent::MouseButtonRelease) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+        if (mouseEvent->button() == Qt::LeftButton) {
+            d->clickCount++;
+
+            if (d->clickCount >= d->CLICK_THRESHOLD) {
+                d->showDebugDialog();
+                d->resetClickCount();
+            } else {
+                // Restart the timer on each click
+                d->clickTimer->start();
+            }
+
+            return true;
+        }
+    }
+
     // 绘制背景
     do {
         if (event->type() != QEvent::Paint)
@@ -708,3 +734,15 @@ void SettingDialogPrivate::setQComboxWinStyle(QComboBox *combox)
     combox->setFixedHeight(36);
 }
 #endif
+
+void SettingDialogPrivate::resetClickCount()
+{
+    clickCount = 0;
+}
+
+void SettingDialogPrivate::showDebugDialog()
+{
+    DLOG << "Opening debug dialog from settings";
+    ::DebugDialog dialog(q);
+    dialog.exec();
+}

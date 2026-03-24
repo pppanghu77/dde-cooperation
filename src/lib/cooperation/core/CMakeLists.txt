@@ -26,6 +26,8 @@ FILE(GLOB PLUGIN_FILES
     "${CMAKE_SOURCE_DIR}/src/common/qtcompat.h"
     "${CMAKE_SOURCE_DIR}/src/common/commonutils.h"
     "${CMAKE_SOURCE_DIR}/src/common/commonutils.cpp"
+    "${CMAKE_SOURCE_DIR}/src/common/debugdialog.h"
+    "${CMAKE_SOURCE_DIR}/src/common/debugdialog.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/cooperationcoreplugin.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/cooperationcoreplugin.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/global_defines.h"

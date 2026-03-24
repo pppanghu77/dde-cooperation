@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 UnionTech Software Technology Co., Ltd.
+// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -117,12 +117,7 @@ void CommonUitls::initLog()
     LOG << "Debug build, set LogLevel " << deepin_cross::g_logLevel;
 #endif
 
-#ifdef linux
-    QString logConfPath = QString("/usr/share/%1/")
-                                  .arg(qApp->applicationName());   //  /usr/share/xx
-#else
     QString logConfPath = logDir();
-#endif
     QString configFile = logConfPath + "config.conf";   //日志级别配置
     QFile file(configFile);
     QSettings settings(configFile, QSettings::IniFormat);
@@ -322,4 +317,9 @@ QString CommonUitls::ipcServerName(const QString &appName)
         userKey = QString("%1/%2").arg(QStandardPaths::writableLocation(QStandardPaths::TempLocation), key);
     }
     return userKey;
+}
+
+QString CommonUitls::getLogDir()
+{
+    return logDir();
 }

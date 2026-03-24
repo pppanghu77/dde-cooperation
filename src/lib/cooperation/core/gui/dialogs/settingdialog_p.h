@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2023 UnionTech Software Technology Co., Ltd.
+﻿// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -14,6 +14,8 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QScrollArea>
+#include <QLabel>
+#include <QTimer>
 
 namespace cooperation_core {
 
@@ -43,6 +45,7 @@ public Q_SLOTS:
     void onClipboardShareButtonClicked(bool clicked);
     void onFileChoosed(const QString &path);
     void reportDeviceStatus(const QString &type, bool status);
+    void resetClickCount();
 
 private:
     void initFont();
@@ -51,6 +54,7 @@ private:
     void createTransferWidget();
     void createClipboardShareWidget();
     bool checkNameValid();
+    void showDebugDialog();
 
 private:
     SettingDialog *q { nullptr };
@@ -64,6 +68,7 @@ private:
     CooperationSwitchButton *devShareSwitchBtn { nullptr };
     CooperationSwitchButton *clipShareSwitchBtn { nullptr };
     FileChooserEdit *chooserEdit { nullptr };
+    CooperationLabel *basicLabel { nullptr };
 
     QStringList findComboBoxInfo;
     QList<QPair<QString, QString>> connectComboBoxInfo;
@@ -71,6 +76,9 @@ private:
 
     QFont groupFont;
     QFont tipFont;
+    QTimer *clickTimer { nullptr };
+    int clickCount { 0 };
+    static constexpr int CLICK_THRESHOLD = 10;
 };
 
 }   // namespace cooperation_core

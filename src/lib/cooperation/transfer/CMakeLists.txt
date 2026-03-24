@@ -28,6 +28,8 @@ FILE(GLOB PLUGIN_FILES
     "${CMAKE_SOURCE_DIR}/src/common/qtcompat.h"
     "${CMAKE_SOURCE_DIR}/src/common/commonutils.h"
     "${CMAKE_SOURCE_DIR}/src/common/commonutils.cpp"
+    "${CMAKE_SOURCE_DIR}/src/common/debugdialog.h"
+    "${CMAKE_SOURCE_DIR}/src/common/debugdialog.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/transferplugin.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/transferplugin.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/helper/*.h"
