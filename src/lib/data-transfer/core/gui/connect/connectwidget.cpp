@@ -1,4 +1,8 @@
-﻿#ifdef __linux__
+// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#ifdef __linux__
 #    include "connectwidget.h"
 #    include "../type_defines.h"
 
@@ -9,10 +13,14 @@
 #    include <QLineEdit>
 #    include <QTimer>
 #    include <QHostInfo>
+#    include <QRegularExpressionValidator>
+#    include <QVBoxLayout>
 #    include <common/commonutils.h>
 #    include <QDesktopServices>
+#    include <QMouseEvent>
 
 #    include <net/helper/transferhepler.h>
+#    include <utils/portmanager.h>
 
 ConnectWidget::ConnectWidget(QWidget *parent)
     : QFrame(parent)
@@ -30,6 +38,7 @@ void ConnectWidget::initUI()
 {
     DLOG << "ConnectWidget initUI";
     setStyleSheet(".ConnectWidget{background-color: white; border-radius: 10px;}");
+    setFocusPolicy(Qt::StrongFocus);  // 接受焦点，点击即可让 portInput 失焦触发校验
 
     QVBoxLayout *mainLayout = new QVBoxLayout();
     setLayout(mainLayout);
@@ -90,7 +99,6 @@ void ConnectWidget::initUI()
     mainLayout->addWidget(downloadLabel);
     mainLayout->addSpacing(50);
     mainLayout->addLayout(connectLayout);
-    mainLayout->addWidget(WarnningLabel);
     mainLayout->addSpacing(50);
     mainLayout->addLayout(buttonLayout);
     mainLayout->addSpacing(10);
@@ -101,47 +109,83 @@ void ConnectWidget::initUI()
 void ConnectWidget::initConnectLayout()
 {
     DLOG << "ConnectWidget initConnectLayout";
-    //ipLayout
     QString ipaddress = deepin_cross::CommonUitls::getFirstIp().data();
+    m_savedPort = PortManager::instance()->getPort();
 
     QVBoxLayout *ipVLayout = new QVBoxLayout();
+    ipVLayout->setSpacing(8);
     QLabel *iconLabel = new QLabel(this);
     QLabel *nameLabel = new QLabel(QHostInfo::localHostName() + tr("computer"), this);
-    QFrame *ipFrame = new QFrame(this);
-    ipLabel = new QLabel(this);
-    ipLabel1 = new QLabel(tr("Local IP") + ":", this);
-    iconLabel->setPixmap(QIcon(":/icon/computer.svg").pixmap(96, 96));
 
+    // ---- IP 和端口放在同一个圆角框内 ----
+    QFrame *ipFrame = new QFrame(this);
     ipFrame->setStyleSheet(".QFrame{"
                            "background-color: rgba(0, 129, 255, 0.1); "
                            "border-radius: 16; "
                            "border: 1px solid rgba(0, 129, 255, 0.2);"
                            "}");
-	ipFrame->setFixedHeight(32);
-	ipFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    ipFrame->setFixedHeight(60);
+    ipFrame->setFixedWidth(180);
+    ipFrame->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-    ipLabel->setText(ipaddress);
-    ipLabel1->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    StyleHelper::setAutoFont(ipLabel, 17, QFont::Bold);
+    QVBoxLayout *ipFrameLayout = new QVBoxLayout(ipFrame);
+    ipFrameLayout->setSpacing(2);
+    ipFrameLayout->setContentsMargins(12, 0, 12, 0);
+    ipFrameLayout->setAlignment(Qt::AlignVCenter);
+
+    // 第一行：IP 标签
+    QHBoxLayout *ipRow = new QHBoxLayout();
+    ipLabel = new QLabel(ipaddress, this);
+    ipLabel1 = new QLabel(tr("Local IP") + ":", this);
+    StyleHelper::setAutoFont(ipLabel, 14, QFont::Bold);
     StyleHelper::setAutoFont(ipLabel1, 12, QFont::Normal);
+    ipLabel1->setAlignment(Qt::AlignVCenter);
+    ipRow->addStretch();
+    ipRow->addWidget(ipLabel1);
+    ipRow->addSpacing(8);
+    ipRow->addWidget(ipLabel);
+    ipRow->addStretch();
 
-	// keep both the localized prefix and IP value inside the rounded frame
-	QHBoxLayout *ipInnerLayout = new QHBoxLayout(ipFrame);
-	ipInnerLayout->addWidget(ipLabel1);
-	ipInnerLayout->addSpacing(8);
-	ipInnerLayout->addWidget(ipLabel);
-	ipInnerLayout->setSpacing(8);
-	ipInnerLayout->setContentsMargins(12, 0, 12, 0);
+    // 第二行：端口（无框，双击可编辑）
+    QHBoxLayout *portRow = new QHBoxLayout();
+    QLabel *portLabel = new QLabel(tr("Port") + ":", this);
+    StyleHelper::setAutoFont(portLabel, 12, QFont::Normal);
+    portLabel->setAlignment(Qt::AlignVCenter);
 
+    portInput = new QLineEdit(QString::number(m_savedPort), this);
+    portInput->setStyleSheet("border: none;"
+                             "background: transparent;"
+                             "padding: 0px;");
+    portInput->setFixedWidth(60);
+    portInput->setValidator(new QRegularExpressionValidator(QRegularExpression("^[0-9]*$"), this));
+    StyleHelper::setAutoFont(portInput, 14, QFont::Bold);
+    connect(portInput, &QLineEdit::editingFinished, this, &ConnectWidget::onPortEditingFinished);
+
+    // 监听端口变更
+    connect(PortManager::instance(), &PortManager::portChanged, this, [this](int newPort) {
+        m_savedPort = newPort;
+        portInput->setText(QString::number(newPort));
+    });
+
+    portRow->addStretch();
+    portRow->addWidget(portLabel);
+    portRow->addSpacing(8);
+    portRow->addWidget(portInput);
+    portRow->addStretch();
+
+    ipFrameLayout->addLayout(ipRow);
+    ipFrameLayout->addLayout(portRow);
+
+    iconLabel->setPixmap(QIcon(":/icon/computer.svg").pixmap(96, 96));
+    iconLabel->setFixedSize(96, 96);
     iconLabel->setAlignment(Qt::AlignCenter);
     nameLabel->setAlignment(Qt::AlignCenter);
 
-    ipVLayout->addWidget(iconLabel);
-    ipVLayout->addWidget(nameLabel);
-	ipVLayout->addWidget(ipFrame);
-    ipVLayout->setAlignment(Qt::AlignCenter);
+    ipVLayout->addWidget(iconLabel, 0, Qt::AlignCenter);
+    ipVLayout->addWidget(nameLabel, 0, Qt::AlignCenter);
+    ipVLayout->addWidget(ipFrame, 0, Qt::AlignCenter);
 
-    //passwordLayout
+    // ---- 密码区 ----
     QString password = TransferHelper::instance()->updateConnectPassword();
     remainingTime = 300;
 
@@ -174,7 +218,6 @@ void ConnectWidget::initConnectLayout()
     QTimer *timer = new QTimer();
     connect(timer, &QTimer::timeout, [refreshLabel, tipLabel, passwordLabel, nullLabel, timer, this]() {
         if (remainingTime > 0 && !passwordLabel->text().isEmpty()) {
-            DLOG << "Remaining time:" << remainingTime << "s";
             remainingTime--;
             QString tip = QString("%1<font color='#6199CA'> %2s </font>%3").arg(tr("The code will be expired in")).arg(QString::number(remainingTime)).arg(tr("please input connect code as soon as possible"));
             tipLabel->setText(tip);
@@ -183,7 +226,10 @@ void ConnectWidget::initConnectLayout()
             tipLabel->setVisible(false);
             passwordLabel->setVisible(false);
             nullLabel->setVisible(true);
-            WarnningLabel->setVisible(true);
+            WarnningLabel->adjustSize();
+            WarnningLabel->move((this->width() - WarnningLabel->width()) / 2, this->height() - 140);
+            WarnningLabel->raise();
+            WarnningLabel->show();
             timer->stop();
             emit refreshLabel->linkActivated(" ");
         }
@@ -196,7 +242,7 @@ void ConnectWidget::initConnectLayout()
         tipLabel->setVisible(true);
         passwordLabel->setVisible(true);
         nullLabel->setVisible(false);
-        WarnningLabel->setVisible(false);
+        WarnningLabel->hide();
         remainingTime = 300;
         if (!timer->isActive()) {
             DLOG << "Restarting password expiration timer";
@@ -214,7 +260,7 @@ void ConnectWidget::initConnectLayout()
     passwordVLayout->addWidget(tipLabel);
     passwordVLayout->setAlignment(Qt::AlignCenter);
 
-    //separatorLabel
+    // 分隔线
     separatorLabel = new QLabel(this);
     separatorLabel->setFixedSize(2, 160);
     separatorLabel->setStyleSheet(".QLabel { background-color: rgba(0, 0, 0, 0.1); width: 2px; }");
@@ -228,6 +274,52 @@ void ConnectWidget::initConnectLayout()
     connectLayout->setSpacing(15);
     connectLayout->setAlignment(Qt::AlignCenter);
     DLOG << "ConnectWidget initConnectLayout finished";
+}
+
+void ConnectWidget::onPortEditingFinished()
+{
+    DLOG << "onPortEditingFinished called, text:'" << portInput->text().toStdString() << "'"
+         << "savedPort:" << m_savedPort;
+
+    if (!portDebounceTimer) {
+        portDebounceTimer = new QTimer(this);
+        portDebounceTimer->setSingleShot(true);
+        portDebounceTimer->setInterval(1000);
+        connect(portDebounceTimer, &QTimer::timeout, this, [this]() {
+            QString text = portInput->text().trimmed();
+            DLOG << "debounced validate, text:'" << text.toStdString() << "'";
+
+            if (text.isEmpty()) {
+                portInput->setText(QString::number(m_savedPort));
+                WarnningLabel->hide();
+                return;
+            }
+
+            int port = text.toInt();
+            if (port == m_savedPort) {
+                WarnningLabel->hide();
+                return;
+            }
+
+            QString err = PortManager::instance()->validatePort(port);
+            DLOG << "validate result:'" << err.toStdString() << "'";
+            if (err.isEmpty()) {
+                PortManager::instance()->setPort(port);
+                m_savedPort = port;
+                WarnningLabel->hide();
+            } else {
+                portInput->setText(QString::number(m_savedPort));
+                WarnningLabel->setText(err);
+                WarnningLabel->adjustSize();
+                int x = (width() - WarnningLabel->width()) / 2;
+                WarnningLabel->move(x, height() - 140);
+                WarnningLabel->lower();
+                WarnningLabel->show();
+            }
+        });
+    }
+
+    portDebounceTimer->start();
 }
 
 void ConnectWidget::nextPage()
@@ -253,7 +345,6 @@ void ConnectWidget::themeChanged(int theme)
 {
     DLOG << "Theme changed to:" << (theme == 1 ? "light" : "dark");
 
-    // light
     if (theme == 1) {
         DLOG << "Theme is light, setting stylesheet";
         setStyleSheet(".ConnectWidget{background-color: rgba(255,255,255,1); border-radius: 10px;}");
@@ -261,12 +352,23 @@ void ConnectWidget::themeChanged(int theme)
         ipLabel->setStyleSheet(" ");
         ipLabel1->setStyleSheet(" ");
     } else {
-        // dark
         DLOG << "Theme is dark, setting stylesheet";
         setStyleSheet(".ConnectWidget{background-color: rgba(37, 37, 37,1); border-radius: 10px;}");
         separatorLabel->setStyleSheet("background-color: rgba(220, 220, 220,0.1); width: 2px;");
         ipLabel->setStyleSheet("color: rgb(192, 192, 192);");
         ipLabel1->setStyleSheet("color: rgb(192, 192, 192);");
+    }
+}
+
+void ConnectWidget::mousePressEvent(QMouseEvent *event)
+{
+    // 点击端口输入框以外的区域时失焦，触发 editingFinished 校验
+    QFrame::mousePressEvent(event);
+    if (portInput && portInput->hasFocus()) {
+        QPoint localPos = portInput->mapFrom(this, event->pos());
+        if (!portInput->rect().contains(localPos)) {
+            portInput->clearFocus();
+        }
     }
 }
 #endif

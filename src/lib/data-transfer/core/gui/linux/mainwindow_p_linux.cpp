@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "../mainwindow.h"
 #include "../mainwindow_p.h"
 
@@ -21,6 +25,7 @@
 #include <gui/transfer/waittransferwidget.h>
 
 #include <net/helper/transferhepler.h>
+#include <utils/portmanager.h>
 
 DWIDGET_USE_NAMESPACE
 DTK_USE_NAMESPACE
@@ -81,6 +86,8 @@ void MainWindowPrivate::initWidgets()
     stackedWidget->insertWidget(PageName::resultwidget, resultwidget);
 
     stackedWidget->setCurrentIndex(PageName::startwidget);
+
+    // 端口的 DConfig 读取与实时监听统一由 PortManager 负责，此处不再重复读取
 
     connect(TransferHelper::instance(), &TransferHelper::clearWidget, this, [transferringwidget, resultwidget, uploadwidget]() {
         DLOG << "Clearing widgets content";

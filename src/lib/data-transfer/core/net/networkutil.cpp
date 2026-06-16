@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2023 - 2024 UnionTech Software Technology Co., Ltd.
+﻿// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -25,6 +25,7 @@
 #include <QTime>
 
 #include <utils/transferutil.h>
+#include <utils/portmanager.h>
 
 #ifdef ENABLE_COMPAT
 using namespace cooperation_core;
@@ -53,7 +54,19 @@ NetworkUtilPrivate::NetworkUtilPrivate(NetworkUtil *qq)
     sessionManager = new SessionManager(this);
     sessionManager->setSessionExtCallback(msg_cb);
 
-    sessionManager->sessionListen(DATA_SESSION_PORT);
+    currentListenPort = PortManager::instance()->getPort();
+    sessionManager->sessionListen(currentListenPort);
+
+    // UOS端监听端口变更信号
+#ifdef __linux__
+    connect(PortManager::instance(), &PortManager::portChanged, this, [this](int newPort) {
+        if (newPort != currentListenPort) {
+            DLOG << "Session port changed from" << currentListenPort << "to" << newPort;
+            sessionManager->updateListenPort(newPort);
+            currentListenPort = newPort;
+        }
+    });
+#endif
 
     connect(sessionManager, &SessionManager::notifyConnection, this, &NetworkUtilPrivate::handleConnectStatus, Qt::QueuedConnection);
     connect(sessionManager, &SessionManager::notifyTransChanged, this, &NetworkUtilPrivate::handleTransChanged, Qt::QueuedConnection);
@@ -264,11 +277,16 @@ void NetworkUtil::updatePassword(const QString &code)
 
 bool NetworkUtil::doConnect(const QString &ip, const QString &password)
 {
-    LOG << "Attempting to connect to:" << ip.toStdString();
+    return doConnect(ip, PortManager::instance()->getPort(), password);
+}
+
+bool NetworkUtil::doConnect(const QString &ip, int sessionPort, const QString &password)
+{
+    LOG << "Attempting to connect to:" << ip.toStdString() << "port:" << sessionPort;
     _loginCombi.first = ip;
     _loginCombi.second = password;
 
-    int logind = d->sessionManager->sessionConnect(ip, DATA_SESSION_PORT, password);
+    int logind = d->sessionManager->sessionConnect(ip, sessionPort, password);
     if (logind > 0) {
         d->confirmTargetAddress = ip;
         LOG << "Connection established with:" << ip.toStdString();
@@ -293,6 +311,13 @@ void NetworkUtil::disConnect()
         ipc->call("doDisconnectCallback", Q_ARG(QString, appName));
     }
 #endif
+}
+
+void NetworkUtil::updateListenPort(int port)
+{
+    DLOG << "Updating listen port to:" << port;
+    d->sessionManager->updateListenPort(port);
+    d->currentListenPort = port;
 }
 
 bool NetworkUtil::sendMessage(const QString &message)

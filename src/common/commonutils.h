@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 UnionTech Software Technology Co., Ltd.
+// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -31,12 +31,13 @@ public:
 
     static int getAvailablePort();
 
+    static bool isPortInUse(int port);
+
     static QString ipcServerName(const QString &appName);
 private:
     static QString logDir();
     static bool detailLog();
     static bool isProcessRunning(const QString &processName);
-    static bool isPortInUse(int port);
 };
 }
 

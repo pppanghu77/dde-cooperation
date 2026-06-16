@@ -110,6 +110,10 @@ if (CMAKE_SYSTEM MATCHES "Linux")
         PRIVATE
         Dtk${DTK_VERSION_MAJOR}::Widget
     )
+
+    # 安装数据传输 dconfig schema (appid: org.deepin.dde.cooperation.transfer)
+    install(FILES ${CMAKE_SOURCE_DIR}/assets/configs/org.deepin.dde.cooperation.transfer.json
+        DESTINATION share/dsg/configs/org.deepin.dde.cooperation.transfer)
 endif()
 
 # 若编译器是 GNU/Clang, 则添加 -pie

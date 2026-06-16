@@ -40,6 +40,8 @@ FILE(GLOB PLUGIN_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/net/helper/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/optionsmanager.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/optionsmanager.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/utils/portmanager.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/utils/portmanager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/transferutil.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/transferutil.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.json"

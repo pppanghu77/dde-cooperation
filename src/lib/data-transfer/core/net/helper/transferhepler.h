@@ -1,4 +1,8 @@
-﻿#ifndef TRANSFERHELPER_H
+﻿// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#ifndef TRANSFERHELPER_H
 #define TRANSFERHELPER_H
 
 #include "common/log.h"
@@ -20,6 +24,7 @@ public:
 
     QString updateConnectPassword();
     void tryConnect(const QString &ip, const QString &password);
+    void tryConnect(const QString &ip, const QString &password, int port);
 
     void disconnectRemote();
     QString getJsonfile(const QJsonObject &jsonData, const QString &save);
