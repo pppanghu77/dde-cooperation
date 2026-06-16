@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 - 2024 UnionTech Software Technology Co., Ltd.
+// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -18,7 +18,9 @@ public:
 
     // setting
     bool doConnect(const QString &ip, const QString &password);
+    bool doConnect(const QString &ip, int sessionPort, const QString &password);
     void disConnect();
+    void updateListenPort(int port);
     void updatePassword(const QString &code);
     void updateStorageConfig();
     bool sendMessage(const QString &msg);

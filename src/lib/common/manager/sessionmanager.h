@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 UnionTech Software Technology Co., Ltd.
+// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -27,6 +27,7 @@ public:
     void updateLoginStatus(QString &ip, bool logined);
 
     void sessionListen(int port);
+    void updateListenPort(int port);
     bool sessionPing(QString ip, int port);
     int sessionConnect(QString ip, int port, QString password);
     void sessionDisconnect(QString ip);

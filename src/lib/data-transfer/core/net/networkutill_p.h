@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 UnionTech Software Technology Co., Ltd.
+// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -43,6 +43,7 @@ private:
     TransferInfo transferInfo;
     QString transferingFile;
     QString finishfile;
+    int currentListenPort = 0;   // 当前监听端口
     QString confirmTargetAddress {};   // remote ip address
     QString storageFolder = {};   //sub folder under storage dir config
 };

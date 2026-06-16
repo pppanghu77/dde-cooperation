@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 UnionTech Software Technology Co., Ltd.
+// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -105,6 +105,19 @@ void SessionManager::sessionListen(int port)
     }
 
 //    emit notifyConnection(success, "");
+}
+
+void SessionManager::updateListenPort(int port)
+{
+    DLOG << "updateListenPort: " << port;
+    _session_worker->stop();
+    bool success = _session_worker->startListen(port);
+    if (!success) {
+        ELOG << "Fail to listen on new port after switch: " << port
+             << ", data transfer may not work properly";
+    } else {
+        DLOG << "Listen port switched to: " << port;
+    }
 }
 
 bool SessionManager::sessionPing(QString ip, int port)

@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2023 - 2024 UnionTech Software Technology Co., Ltd.
+﻿// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -6,6 +6,7 @@
 
 #include "utils/optionsmanager.h"
 #include "utils/transferutil.h"
+#include "utils/portmanager.h"
 #include "common/commonutils.h"
 #include "net/networkutil.h"
 
@@ -61,8 +62,13 @@ QString TransferHelper::updateConnectPassword()
 
 void TransferHelper::tryConnect(const QString &ip, const QString &password)
 {
-    DLOG << "Attempting to connect to:" << ip.toStdString();
-    bool res = NetworkUtil::instance()->doConnect(ip, password);
+    tryConnect(ip, password, PortManager::instance()->getPort());
+}
+
+void TransferHelper::tryConnect(const QString &ip, const QString &password, int port)
+{
+    DLOG << "Attempting to connect to:" << ip.toStdString() << "port:" << port;
+    bool res = NetworkUtil::instance()->doConnect(ip, port, password);
     if (res)
         emit connectSucceed();
 }

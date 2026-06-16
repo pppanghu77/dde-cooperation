@@ -1,4 +1,8 @@
-﻿#include "readywidget.h"
+// SPDX-FileCopyrightText: 2023 - 2026 UnionTech Software Technology Co., Ltd.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#include "readywidget.h"
 #include "common/log.h"
 
 #include <QHBoxLayout>
@@ -11,8 +15,10 @@
 #include <QLineEdit>
 #include <QRegularExpressionValidator>
 #include <QTimer>
+#include <QTcpSocket>
 
 #include <net/helper/transferhepler.h>
+#include <utils/portmanager.h>
 
 ReadyWidget::ReadyWidget(QWidget *parent)
     : QFrame(parent)
@@ -31,11 +37,67 @@ void ReadyWidget::clear()
     DLOG << "ReadyWidget clear";
     ipInput->clear();
     captchaInput->clear();
+    portInput->clear();
+    portError->setVisible(false);
     tiptextlabel->setVisible(false);
     setnextButEnable(false);
     tiptextlabel->setStyleSheet(StyleHelper::textStyle(StyleHelper::normal));
     tiptextlabel->setText(tr("connect..."));
     DLOG << "ReadyWidget clear finished";
+}
+
+void ReadyWidget::initPortInput(QVBoxLayout *mainLayout)
+{
+    m_savedPort = PortManager::instance()->getPort();
+
+    QLabel *portTitle = new QLabel(tr("Port"), this);
+    QHBoxLayout *portTitleLayout = new QHBoxLayout(this);
+    portTitleLayout->setContentsMargins(0, 0, 0, 0);
+    portTitleLayout->addSpacing(190);
+    portTitleLayout->addWidget(portTitle);
+    portTitleLayout->setAlignment(Qt::AlignBottom);
+
+    portInput = new QLineEdit(this);
+    portInput->setPlaceholderText(QString::number(m_savedPort));
+    portInput->setStyleSheet("border-radius: 8px;"
+                             "opacity: 1;"
+                             "padding-left: 10px;"
+                             "background-color: rgba(0,0,0, 0.08);");
+    portInput->setFixedSize(340, 36);
+    portInput->setValidator(new QIntValidator(1, 65535, this));
+    connect(portInput, &QLineEdit::editingFinished, this, [this]() {
+        if (portInput->text().isEmpty())
+            portInput->setText(QString::number(m_savedPort));
+    });
+
+    QHBoxLayout *portInputLayout = new QHBoxLayout(this);
+    portInputLayout->setContentsMargins(0, 0, 0, 0);
+    portInputLayout->setAlignment(Qt::AlignCenter);
+    portInputLayout->addWidget(portInput);
+
+    portError = new QLabel(this);
+    portError->setStyleSheet(StyleHelper::textStyle(StyleHelper::error));
+    portError->setVisible(false);
+    portError->setAlignment(Qt::AlignCenter);
+
+    connect(portInput, &QLineEdit::textChanged, this, [this]() {
+        portError->setVisible(false);
+    });
+
+    mainLayout->addLayout(portTitleLayout);
+    mainLayout->addLayout(portInputLayout);
+    mainLayout->addWidget(portError);
+}
+
+bool ReadyWidget::checkPortConnectivity(const QString &ip, int port)
+{
+    QTcpSocket socket;
+    socket.connectToHost(ip, port);
+    if (!socket.waitForConnected(3000)) {
+        return false;
+    }
+    socket.disconnectFromHost();
+    return true;
 }
 
 void ReadyWidget::initUI()
@@ -49,6 +111,7 @@ void ReadyWidget::initUI()
     timer->setInterval(3000);
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setSpacing(0);
     setLayout(mainLayout);
 
     QLabel *titileLabel = new QLabel(tr("Ready to connect"), this);
@@ -57,6 +120,7 @@ void ReadyWidget::initUI()
 
     QLabel *ipLabel = new QLabel(tr("IP"), this);
     QHBoxLayout *ipLayout = new QHBoxLayout(this);
+    ipLayout->setContentsMargins(0, 0, 0, 0);
     ipLayout->addSpacing(190);
     ipLayout->addWidget(ipLabel);
     ipLayout->setAlignment(Qt::AlignBottom);
@@ -80,20 +144,17 @@ void ReadyWidget::initUI()
         DLOG << "IP input text changed, clear button enabled:" << !isEmpty;
     });
     QHBoxLayout *editLayout1 = new QHBoxLayout(this);
+    editLayout1->setContentsMargins(0, 0, 0, 0);
     editLayout1->setAlignment(Qt::AlignCenter);
     editLayout1->addWidget(ipInput);
 
-    QLabel *cue = new QLabel(tr("Please open data transfer on UOS, and get the IP"), this);
-    QHBoxLayout *cueLayout = new QHBoxLayout(this);
-    cueLayout->addSpacing(190);
-    cueLayout->addWidget(cue);
-    cueLayout->setAlignment(Qt::AlignTop);
 
     QLabel *Captcha = new QLabel(tr("Connect code"), this);
     QHBoxLayout *captchaLayout = new QHBoxLayout(this);
+    captchaLayout->setContentsMargins(0, 0, 0, 0);
     captchaLayout->addSpacing(190);
     captchaLayout->addWidget(Captcha);
-    captchaLayout->setAlignment(Qt::AlignTop);
+    captchaLayout->setAlignment(Qt::AlignBottom);
 
     captchaInput = new QLineEdit(this);
     QRegularExpressionValidator *captchaValidator =
@@ -112,6 +173,7 @@ void ReadyWidget::initUI()
     });
 
     QHBoxLayout *editLayout2 = new QHBoxLayout(this);
+    editLayout2->setContentsMargins(0, 0, 0, 0);
     editLayout2->setAlignment(Qt::AlignCenter);
     editLayout2->addWidget(captchaInput);
 
@@ -135,23 +197,19 @@ void ReadyWidget::initUI()
     IndexLabel *indelabel = new IndexLabel(1, this);
     indelabel->setAlignment(Qt::AlignCenter);
     QHBoxLayout *indexLayout = new QHBoxLayout(this);
+    indexLayout->setContentsMargins(0, 0, 0, 0);
     indexLayout->addWidget(indelabel, Qt::AlignCenter);
 
     mainLayout->addSpacing(40);
     mainLayout->addWidget(titileLabel);
-    mainLayout->addSpacing(30);
     mainLayout->addLayout(ipLayout);
-    mainLayout->addSpacing(10);
     mainLayout->addLayout(editLayout1);
-    mainLayout->addSpacing(10);
-    mainLayout->addLayout(cueLayout);
-    mainLayout->addSpacing(50);
     mainLayout->addLayout(captchaLayout);
-    mainLayout->addSpacing(10);
     mainLayout->addLayout(editLayout2);
-    mainLayout->addSpacing(100);
+    // 端口输入
+    initPortInput(mainLayout);
+    mainLayout->addSpacing(80);
     mainLayout->addWidget(tiptextlabel);
-//    mainLayout->addSpacing(10);
     mainLayout->addLayout(buttonLayout);
     mainLayout->addSpacing(4);
     mainLayout->addLayout(indexLayout);
@@ -173,12 +231,31 @@ void ReadyWidget::initUI()
 void ReadyWidget::tryConnect()
 {
     DLOG << "ReadyWidget tryConnect";
+
+    int port = portInput->text().isEmpty() ? m_savedPort : portInput->text().toInt();
+
+    QString err = PortManager::instance()->validatePort(port);
+    if (!err.isEmpty()) {
+        portError->setText(err);
+        portError->setVisible(true);
+        return;
+    }
+
+    if (!checkPortConnectivity(ipInput->text(), port)) {
+        tiptextlabel->setStyleSheet(StyleHelper::textStyle(StyleHelper::error));
+        tiptextlabel->setText(tr("Port is unreachable, please change the port on both devices and retry"));
+        tiptextlabel->setVisible(true);
+        return;
+    }
+
+    PortManager::instance()->setPort(port);
+
     tiptextlabel->setText(
             QString("<font size='3' color='#000000'>%1</font>").arg(tr("connect...")));
     tiptextlabel->setVisible(true);
     setnextButEnable(false);
 
-    TransferHelper::instance()->tryConnect(ipInput->text(), captchaInput->text());
+    TransferHelper::instance()->tryConnect(ipInput->text(), captchaInput->text(), port);
     timer->start();
     DLOG << "ReadyWidget tryConnect finished";
 }
@@ -219,7 +296,6 @@ void ReadyWidget::setnextButEnable(bool enabel)
 void ReadyWidget::nextPage()
 {
     DLOG << "ReadyWidget nextPage";
-    // tiptextlabel->setVisible(false);
     QStackedWidget *stackedWidget = qobject_cast<QStackedWidget *>(this->parent());
     if (stackedWidget) {
         DLOG << "Jump to next page";
@@ -280,4 +356,10 @@ void ReadyWidget::connectFailed()
     DLOG << "ReadyWidget connectFailed";
     tiptextlabel->setStyleSheet(StyleHelper::textStyle(StyleHelper::error));
     tiptextlabel->setText(tr("Failed to connect, please check your input"));
+}
+
+void ReadyWidget::themeChanged(int theme)
+{
+    // TODO: 适配暗色主题
+    DLOG << "themeChanged:" << theme;
 }
