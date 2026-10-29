@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2023 UnionTech Software Technology Co., Ltd.
+﻿// SPDX-FileCopyrightText: 2023-2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -162,8 +162,11 @@ void DeviceItem::setDeviceName(const QString &name)
     auto showName = fm.elidedText(name, Qt::ElideMiddle, 385);
 
     nameLabel->setText(showName);
-    if (showName != name)
-        nameLabel->setToolTip(name);
+    if (showName != name) {
+        QString richTip = QStringLiteral("<p style=\"white-space: pre-wrap; max-width: 400px;">%1</p>")
+                              .arg(name.toHtmlEscaped());
+        nameLabel->setToolTip(richTip);
+    }
 }
 
 void DeviceItem::setDeviceStatus(DeviceInfo::ConnectStatus status)
