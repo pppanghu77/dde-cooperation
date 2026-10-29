@@ -27,6 +27,8 @@ public:
 Q_SIGNALS:
     void textChanged(const QString &);
     void editingFinished();
+    void focusIn();
+    void focusOut();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;

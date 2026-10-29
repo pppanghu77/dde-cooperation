@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QToolButton>
 #include <QGraphicsDropShadowEffect>
+#include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
 #include <QGuiApplication>
 #include <QVBoxLayout>
@@ -216,6 +217,16 @@ void FirstTipWidget::inittipBtn()
 
 void FirstTipWidget::setVisible(bool visible)
 {
+    if (visible) {
+        if (m_opacityAnim && m_opacityAnim->state() == QAbstractAnimation::Running) {
+            disconnect(m_opacityAnim, nullptr, this, nullptr);
+            m_opacityAnim->stop();
+            m_opacityAnim->deleteLater();
+            m_opacityAnim = nullptr;
+        }
+        if (auto *eff = qobject_cast<QGraphicsOpacityEffect *>(graphicsEffect()))
+            eff->setOpacity(1.0);
+    }
     QWidget::setVisible(visible);
     tipBtn->setVisible(visible);
 #ifdef linux
@@ -229,6 +240,37 @@ void FirstTipWidget::setVisible(bool visible)
 #else
     tipBtn->setGeometry(467, 115, 18, 18);
 #endif
+}
+
+void FirstTipWidget::setVisibleAnimated(bool visible)
+{
+    if (m_opacityAnim) {
+        disconnect(m_opacityAnim, nullptr, this, nullptr);
+        m_opacityAnim->stop();
+        m_opacityAnim->deleteLater();
+        m_opacityAnim = nullptr;
+    }
+
+    auto *effect = qobject_cast<QGraphicsOpacityEffect *>(graphicsEffect());
+    if (!effect) {
+        effect = new QGraphicsOpacityEffect(this);
+        setGraphicsEffect(effect);
+    }
+    effect->setOpacity(visible ? 0.0 : 1.0);
+
+    auto *anim = new QPropertyAnimation(effect, "opacity", this);
+    m_opacityAnim = anim;
+    anim->setDuration(300);
+    anim->setStartValue(visible ? 0.0 : 1.0);
+    anim->setEndValue(visible ? 1.0 : 0.0);
+
+    if (visible) {
+        setVisible(true);
+    } else {
+        connect(anim, &QPropertyAnimation::finished, this, [this]() { setVisible(false); });
+    }
+
+    anim->start();
 }
 
 void LineWidget::paintEvent(QPaintEvent *event)

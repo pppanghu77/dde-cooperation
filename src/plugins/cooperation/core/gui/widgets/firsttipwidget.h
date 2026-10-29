@@ -10,6 +10,7 @@
 #include <QToolButton>
 class QLabel;
 class QGraphicsDropShadowEffect;
+class QPropertyAnimation;
 
 namespace cooperation_core {
 class LineWidget;
@@ -21,6 +22,7 @@ public:
     explicit FirstTipWidget(QWidget *parent = nullptr);
 
     void setVisible(bool visible) override;
+    void setVisibleAnimated(bool visible);
     void themeTypeChanged();
 
 protected:
@@ -39,6 +41,7 @@ private:
     QList<QLabel *> lineBalls { nullptr };
     LineWidget *line { nullptr };
     QToolButton *tipBtn { nullptr };
+    QPropertyAnimation *m_opacityAnim { nullptr };
 };
 
 class LineWidget : public QWidget

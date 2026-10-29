@@ -88,11 +88,13 @@ bool CooperationSearchEdit::eventFilter(QObject *obj, QEvent *event)
             searchIcon->setGeometry(15, 7, 20, 20);
             searchText->setVisible(false);
             searchEdit->setPlaceholderText(placeholderText);
+            Q_EMIT focusIn();
         } else if (event->type() == QEvent::FocusOut && searchEdit->text().isEmpty()) {
             searchIcon->setPixmap(searchicon.pixmap(17, 17));
             searchIcon->setGeometry(125, 7, 20, 20);
             searchText->setVisible(true);
             searchEdit->setPlaceholderText("");
+            Q_EMIT focusOut();
         }
     }
     return QObject::eventFilter(obj, event);

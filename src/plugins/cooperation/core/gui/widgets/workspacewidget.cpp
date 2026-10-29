@@ -94,6 +94,14 @@ void WorkspaceWidgetPrivate::initConnect()
 {
     connect(searchEdit, &CooperationSearchEdit::editingFinished, this, &WorkspaceWidgetPrivate::onSearchDevice);
     connect(searchEdit, &CooperationSearchEdit::textChanged, this, &WorkspaceWidgetPrivate::onSearchValueChanged);
+    connect(searchEdit, &CooperationSearchEdit::focusIn, this, [this]() {
+        if (tipWidget->isVisible() && (qApp->property("onlyTransfer").toBool() || !QFile(deepin_cross::CommonUitls::tipConfPath()).exists()))
+            tipWidget->setVisibleAnimated(false);
+    });
+    connect(searchEdit, &CooperationSearchEdit::focusOut, this, [this]() {
+        if (qApp->property("onlyTransfer").toBool() || !QFile(deepin_cross::CommonUitls::tipConfPath()).exists())
+            tipWidget->setVisibleAnimated(true);
+    });
     connect(this, &WorkspaceWidgetPrivate::devicesAdded, sortFilterWorker.data(), &SortFilterWorker::addDevice, Qt::QueuedConnection);
     connect(this, &WorkspaceWidgetPrivate::devicesRemoved, sortFilterWorker.data(), &SortFilterWorker::removeDevice, Qt::QueuedConnection);
     connect(this, &WorkspaceWidgetPrivate::filterDevice, sortFilterWorker.data(), &SortFilterWorker::filterDevice, Qt::QueuedConnection);
