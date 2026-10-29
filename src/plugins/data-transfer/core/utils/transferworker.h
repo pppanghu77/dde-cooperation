@@ -29,6 +29,7 @@ public:
 
     bool cancelTransferJob();
     bool isTransferring();
+    void resetFileStats();
     void disconnectRemote();
 
 public slots:

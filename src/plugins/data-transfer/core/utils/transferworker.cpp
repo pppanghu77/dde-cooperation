@@ -424,10 +424,18 @@ bool TransferHandle::isTransferring()
     return !_job_maps.isEmpty();
 }
 
+void TransferHandle::resetFileStats()
+{
+    _file_stats.all_total_size = 0;
+    _file_stats.all_current_size = 0;
+    _file_stats.cast_time_ms = 0;
+}
+
 void TransferHandle::sendFiles(QStringList paths)
 {
     if (!_backendOK) return;
 
+    resetFileStats();
     TransferWoker::instance()->sendFiles(_request_job_id, paths);
     _job_maps.insert(_request_job_id, paths.first());
     _request_job_id++;

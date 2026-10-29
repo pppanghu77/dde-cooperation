@@ -62,8 +62,11 @@ void TransferHelper::initOnlineState()
             LOG << "Network is" << isConnected;
             online = isConnected;
             Q_EMIT onlineStateChanged(isConnected);
-            if (transferhandle.isTransferring())
+            if (transferhandle.isTransferring()) {
+                transferhandle.cancelTransferJob();
+                transferhandle.resetFileStats();
                 Q_EMIT interruption();
+            }
         }
     });
 
