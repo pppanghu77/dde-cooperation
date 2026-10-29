@@ -8,6 +8,9 @@
 #include <QTextBrowser>
 #include <QTimer>
 #include <QStackedWidget>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 #include <utils/transferhepler.h>
 
 ResultDisplayWidget::ResultDisplayWidget(QWidget *parent)
@@ -107,14 +110,19 @@ void ResultDisplayWidget::addResult(QString name, bool success, QString reason)
         setStatus(false);
 
     resultWindow->updateContent(name, reason, success);
-    QString res = success ? "true" : "false";
-    processText.append(name + " " + res + " " + reason + ";");
+    QJsonObject obj;
+    obj["name"] = name;
+    obj["success"] = success;
+    obj["reason"] = reason;
+    m_resultArray.append(obj);
+    processText = QString::fromUtf8(QJsonDocument(m_resultArray).toJson(QJsonDocument::Compact));
 }
 
 void ResultDisplayWidget::clear()
 {
     resultWindow->clear();
     processText.clear();
+    m_resultArray = QJsonArray();
     setStatus(true);
 }
 

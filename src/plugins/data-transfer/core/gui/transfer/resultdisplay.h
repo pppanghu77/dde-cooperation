@@ -2,6 +2,7 @@
 #define RESULTDISPLAYWIDGET_H
 
 #include <QFrame>
+#include <QJsonArray>
 #include "../type_defines.h"
 class QTextBrowser;
 class QLabel;
@@ -38,6 +39,7 @@ private:
 private:
     ResultWindow *resultWindow { nullptr };
     QString processText;
+    QJsonArray m_resultArray;
     QLabel *iconLabel { nullptr };
     QLabel *titileLabel { nullptr };
     QLabel *tiptextlabel { nullptr };
